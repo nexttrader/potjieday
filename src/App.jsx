@@ -141,11 +141,18 @@ const App = () => {
 
     // Atomic backend update via RPC
     if (supabase) {
-      await supabase.rpc('submit_potjie_vote', {
-        p_judge_name: name,
-        p_team_id: activeTeamId,
-        p_scores: draftScores
-      })
+      try {
+        const { error: rpcError } = await supabase.rpc('submit_potjie_vote', {
+          p_judge_name: name,
+          p_team_id: activeTeamId,
+          p_scores: draftScores
+        })
+        if (rpcError) throw rpcError
+        await fetchState()
+      } catch (err) {
+        console.error('Vote storage error:', err)
+        setError(`DATABASE ERROR: ${err.message || err.details}. Did you run the latest SQL?`)
+      }
     }
     
     navigate('list')
@@ -807,9 +814,13 @@ declare
 begin
   select data into current_data from potjie_state where id = 'main' for update;
   
-  -- Add judge name if not exists
-  if not (current_data->'voterNames' @> jsonb_build_array(p_judge_name)) then
-    current_data := jsonb_set(current_data, '{voterNames}', (current_data->'voterNames') || jsonb_build_array(p_judge_name));
+  -- Add judge name if not exists (defensive merge)
+  if not (coalesce(current_data->'voterNames', '[]'::jsonb) @> jsonb_build_array(p_judge_name)) then
+    current_data := jsonb_set(
+      current_data, 
+      '{voterNames}', 
+      coalesce(current_data->'voterNames', '[]'::jsonb) || jsonb_build_array(p_judge_name)
+    );
   end if;
 
   if p_is_best_dressed then
@@ -827,7 +838,10 @@ begin
        criterion text;
        score int;
      begin
-       team_data := jsonb_set(team_data, '{count}', to_jsonb((team_data->>'count')::int + 1));
+       -- Ensure team_data has 'count' and 'sums' keys
+       team_data := jsonb_set(team_data, '{count}', to_jsonb(coalesce((team_data->>'count')::int, 0) + 1));
+       if (team_data->'sums') is null then team_data := jsonb_set(team_data, '{sums}', '{}'::jsonb); end if;
+       
        for criterion, score in select * from jsonb_each_text(p_scores) loop
          team_data := jsonb_set(
            team_data, 
@@ -837,7 +851,7 @@ begin
        end loop;
        current_data := jsonb_set(current_data, team_path, team_data);
        
-       -- Update station count
+       -- Update station count (for overall stats)
        current_data := jsonb_set(
          current_data, 
          array['stationCounts', p_team_id], 
