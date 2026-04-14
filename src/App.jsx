@@ -137,35 +137,38 @@ const App = () => {
     const newVotes = { ...votes, [activeTeamId]: draftScores }
     setVotes(newVotes)
     
-    // Update shared state aggregate
-    const allVotes = { ...sharedState.allVotes }
-    if (!allVotes[activeTeamId]) {
-      allVotes[activeTeamId] = { sums: draftScores, count: 1 }
-    } else {
-      const current = allVotes[activeTeamId]
-      const newSums = {}
-      CRITERIA.forEach(c => {
-        newSums[c.id] = (current.sums[c.id] || 0) + draftScores[c.id]
+    localStorage.setItem('pq_votes', JSON.stringify(newVotes))
+
+    // Atomic backend update via RPC
+    if (supabase) {
+      await supabase.rpc('submit_potjie_vote', {
+        p_judge_name: name,
+        p_team_id: activeTeamId,
+        p_scores: draftScores
       })
-      allVotes[activeTeamId] = { sums: newSums, count: current.count + 1 }
     }
-
-    const stationCounts = { ...sharedState.stationCounts }
-    stationCounts[activeTeamId] = (stationCounts[activeTeamId] || 0) + 1
-
-    await updateSharedState({ ...sharedState, allVotes, stationCounts })
+    
     navigate('list')
   }
 
   const submitBestDressed = async () => {
-    const allBD = { ...sharedState?.allBD }
-    if (bd.winner) {
-      allBD[bd.winner] = (allBD[bd.winner] || 0) + 1
+    if (!bd.winner) return
+    
+    // Local persistence
+    const newBd = { winner: bd.winner }
+    setBd(newBd)
+    localStorage.setItem('pq_bd', JSON.stringify(newBd))
+
+    // Atomic backend update via RPC
+    if (supabase) {
+      await supabase.rpc('submit_potjie_vote', {
+        p_judge_name: name,
+        p_team_id: bd.winner,
+        p_scores: {},
+        p_is_best_dressed: true
+      })
     }
     
-    const voterNames = [...(sharedState?.voterNames || []), name]
-    
-    await updateSharedState({ ...sharedState, allBD, voterNames })
     confetti({
       particleCount: 150,
       spread: 70,
@@ -735,15 +738,70 @@ const App = () => {
               <h3 style={{ marginBottom: '12px' }}>Step 1: SQL</h3>
               <pre style={{ fontSize: '10px', background: 'black', padding: '12px', borderRadius: '8px', overflowX: 'auto', color: '#0f0' }}>
 {`create table potjie_state (
-  id text primary key default 'main',
-  data jsonb not null default '{}'::jsonb,
+  id text primary key,
+  data jsonb default '{}'::jsonb,
   updated_at timestamptz default now()
 );
-insert into potjie_state (id, data) values ('main', '{}'::jsonb);
-alter table potjie_state enable row level security;
-create policy "public read" on potjie_state for select using (true);
-create policy "public write" on potjie_state for update using (true);
-alter publication supabase_realtime add table potjie_state;`}
+
+-- Initialize
+insert into potjie_state (id, data) 
+values ('main', '{"votingOpen": true, "leaderboardOn": false, "allVotes": {}, "allBD": {}, "voterNames": [], "stationCounts": {}, "timerEnd": null}')
+on conflict (id) do nothing;
+
+-- ATOMIC VOTE FUNCTION (Fixes integrity issues)
+create or replace function submit_potjie_vote(
+  p_judge_name text,
+  p_team_id text,
+  p_scores jsonb,
+  p_is_best_dressed boolean default false
+) returns void as $$
+declare
+  current_data jsonb;
+begin
+  select data into current_data from potjie_state where id = 'main' for update;
+  
+  -- Add judge name if not exists
+  if not (current_data->'voterNames' @> jsonb_build_array(p_judge_name)) then
+    current_data := jsonb_set(current_data, '{voterNames}', (current_data->'voterNames') || jsonb_build_array(p_judge_name));
+  end if;
+
+  if p_is_best_dressed then
+     -- Update Best Dressed (increment count)
+     current_data := jsonb_set(
+       current_data, 
+       array['allBD', p_team_id], 
+       to_jsonb(coalesce((current_data->'allBD'->>p_team_id)::int, 0) + 1)
+     );
+  else
+     -- Update normal scores (increment counts and sums)
+     declare
+       team_path text[] := array['allVotes', p_team_id];
+       team_data jsonb := coalesce(current_data->'allVotes'->p_team_id, '{"sums": {}, "count": 0}'::jsonb);
+       criterion text;
+       score int;
+     begin
+       team_data := jsonb_set(team_data, '{count}', to_jsonb((team_data->>'count')::int + 1));
+       for criterion, score in select * from jsonb_each_text(p_scores) loop
+         team_data := jsonb_set(
+           team_data, 
+           array['sums', criterion], 
+           to_jsonb(coalesce((team_data->'sums'->>criterion)::int, 0) + score::int)
+         );
+       end loop;
+       current_data := jsonb_set(current_data, team_path, team_data);
+       
+       -- Update station count
+       current_data := jsonb_set(
+         current_data, 
+         array['stationCounts', p_team_id], 
+         to_jsonb(coalesce((current_data->'stationCounts'->>p_team_id)::int, 0) + 1)
+       );
+     end;
+  end if;
+
+  update potjie_state set data = current_data, updated_at = now() where id = 'main';
+end;
+$$ language plpgsql;`}
               </pre>
             </div>
             <div className="card">
