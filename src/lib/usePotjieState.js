@@ -107,6 +107,7 @@ export const usePotjieState = () => {
     setSbUrl,
     sbKey,
     setSbKey,
+    fetchState,
     supabase
   }
 }

@@ -33,7 +33,7 @@ export const INITIAL_STATE = {
   timerEnd: null,
   leaderboardOn: false,
   allVotes: {}, // { teamId: { sums: { taste, ... }, count } }
-  allBD: { winner: {}, runnerup: {} }, // { winner: { teamId: count }, runnerup: { teamId: count } }
+  allBD: {}, // { teamId: count }
   voterNames: [],
   stationCounts: {}, // { teamId: count }
   updatedAt: Date.now()

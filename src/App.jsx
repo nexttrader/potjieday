@@ -29,6 +29,7 @@ const App = () => {
     syncStatus, 
     sbUrl, setSbUrl, 
     sbKey, setSbKey,
+    fetchState,
     supabase 
   } = usePotjieState()
   const [error, setError] = useState(null)
@@ -157,22 +158,19 @@ const App = () => {
   }
 
   const submitBestDressed = async () => {
-    const allBD = { ...sharedState.allBD }
+    const allBD = { ...sharedState?.allBD }
     if (bd.winner) {
-      allBD.winner[bd.winner] = (allBD.winner[bd.winner] || 0) + 1
-    }
-    if (bd.runnerup) {
-      allBD.runnerup[bd.runnerup] = (allBD.runnerup[bd.runnerup] || 0) + 1
+      allBD[bd.winner] = (allBD[bd.winner] || 0) + 1
     }
     
-    const voterNames = [...(sharedState.voterNames || []), name]
+    const voterNames = [...(sharedState?.voterNames || []), name]
     
     await updateSharedState({ ...sharedState, allBD, voterNames })
     confetti({
       particleCount: 150,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#FF4E00', '#F5F5F7', '#30D158']
+      colors: ['#003764', '#E11B22', '#009AC7']
     })
     navigate('done')
   }
@@ -463,36 +461,20 @@ const App = () => {
                 </div>
              </div>
 
-             <h3 style={{ margin: '24px 0 12px', fontSize: '20px' }}>🥇 Winner (Required)</h3>
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
-                {TEAMS.map(t => (
-                  <button 
-                    key={t.id}
-                    className={`btn ${bd.winner === t.id ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ fontSize: '14px', justifyContent: 'flex-start', padding: '12px' }}
-                    onClick={() => setBd({ ...bd, winner: t.id, runnerup: bd.runnerup === t.id ? null : bd.runnerup })}
-                  >
-                    <span style={{ marginRight: '12px', fontSize: '20px' }}>{t.emoji}</span>
-                    {t.name}
-                  </button>
-                ))}
-             </div>
-
-             <h3 style={{ margin: '32px 0 12px', fontSize: '20px' }}>🥈 Runner-up (Optional)</h3>
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', marginBottom: '40px' }}>
-                {TEAMS.map(t => (
-                  <button 
-                    key={t.id}
-                    className={`btn ${bd.runnerup === t.id ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ fontSize: '14px', justifyContent: 'flex-start', padding: '12px', opacity: bd.winner === t.id ? 0.3 : 1 }}
-                    disabled={bd.winner === t.id}
-                    onClick={() => setBd({ ...bd, runnerup: t.id })}
-                  >
-                    <span style={{ marginRight: '12px', fontSize: '20px' }}>{t.emoji}</span>
-                    {t.name}
-                  </button>
-                ))}
-             </div>
+              <h3 style={{ margin: '24px 0 12px', fontSize: '20px', color: 'var(--primary-dark)' }}>🏆 Pick Best Dressed Station</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                 {TEAMS.map(t => (
+                   <button 
+                     key={t.id}
+                     className={`btn ${bd.winner === t.id ? 'btn-primary' : 'btn-secondary'}`}
+                     style={{ fontSize: '14px', justifyContent: 'flex-start', padding: '12px' }}
+                     onClick={() => setBd({ winner: t.id })}
+                   >
+                     <span style={{ marginRight: '12px', fontSize: '20px' }}>{t.emoji}</span>
+                     {t.name}
+                   </button>
+                 ))}
+              </div>
 
              <button 
               className={`btn ${bd.winner ? 'btn-primary' : 'btn-secondary btn-disabled'}`}
@@ -601,24 +583,22 @@ const App = () => {
             <div className="card" style={{ marginTop: '24px', marginBottom: '40px' }}>
               <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--primary-dark)' }}>👗 Best Dressed Results</h3>
               {TEAMS.map(t => {
-                const wVotes = sharedState?.allBD?.winner?.[t.id] || 0
-                const rVotes = sharedState?.allBD?.runnerup?.[t.id] || 0
+                const votes = sharedState?.allBD?.[t.id] || 0
                 
-                // Show ONLY winner to normal users, show both to admin
-                const isWinner = wVotes > 0 && wVotes === Math.max(...Object.values(sharedState?.allBD?.winner || { 'none': 0 }))
+                // Show ONLY winner to normal users, show all to admin
+                const isWinner = votes > 0 && votes === Math.max(...Object.values(sharedState?.allBD || { 'none': 0 }))
                 
-                if (wVotes === 0 && (screen !== 'admin' || rVotes === 0)) return null
+                if (votes === 0) return null
                 if (screen !== 'admin' && !isWinner) return null
                 
                 return (
                   <div key={t.id} style={{ marginBottom: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
                       <span style={{ fontWeight: isWinner ? '900' : 'normal' }}>{t.emoji} {t.name}</span>
-                      <span>{wVotes}🥇 {screen === 'admin' ? `${rVotes}🥈` : ''}</span>
+                      <span>{votes} 🎖️</span>
                     </div>
-                    <div style={{ height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden', display: 'flex' }}>
-                       <div style={{ width: `${(wVotes / (sharedState?.voterNames?.length || 1)) * 100}%`, background: 'var(--primary)' }} />
-                       {screen === 'admin' && <div style={{ width: `${(rVotes / (sharedState?.voterNames?.length || 1)) * 100}%`, background: 'var(--accent)' }} />}
+                    <div style={{ height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                       <div style={{ width: `${(votes / (sharedState?.voterNames?.length || 1)) * 100}%`, height: '100%', background: 'var(--primary)' }} />
                     </div>
                     {isWinner && <div style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 'bold', marginTop: '4px' }}>CURRENT LEADER</div>}
                   </div>
@@ -647,7 +627,10 @@ const App = () => {
                   {syncStatus === 'live' ? 'Connected & Live' : 'Not Connected'}
                 </div>
               </div>
-              <button className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '12px' }} onClick={() => navigate('setup')}>Manage</button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '12px' }} onClick={fetchState}>Refresh Data</button>
+                <button className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '12px' }} onClick={() => navigate('setup')}>API Settings</button>
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '24px' }}>
@@ -663,7 +646,7 @@ const App = () => {
                </div>
                <div className="card" style={{ textAlign: 'center', marginBottom: 0 }}>
                   <CheckCircle2 size={16} className="text-primary" style={{ marginBottom: '4px' }} />
-                  <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{Object.values(sharedState?.allBD?.winner || {}).reduce((a, b) => a + (Number(b) || 0), 0)}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{Object.values(sharedState?.allBD || {}).reduce((a, b) => a + (Number(b) || 0), 0)}</div>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>BD VOTES</div>
                </div>
             </div>
