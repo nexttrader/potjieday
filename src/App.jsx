@@ -136,9 +136,9 @@ const App = () => {
   }
 
   const getTeamAvg = (teamId) => {
-    const data = sharedState.allVotes[teamId]
-    if (!data || data.count === 0) return "0.0"
-    const total = Object.values(data.sums).reduce((a, b) => a + b, 0)
+    const data = sharedState?.allVotes?.[teamId]
+    if (!data || !data.sums || data.count === 0) return "0.0"
+    const total = Object.values(data.sums).reduce((a, b) => a + (Number(b) || 0), 0)
     return (total / (data.count * CRITERIA.length)).toFixed(1)
   }
 
@@ -249,7 +249,7 @@ const App = () => {
 
             {TEAMS.map(team => {
               const voted = !!votes[team.id]
-              const totalVoters = sharedState.stationCounts[team.id] || 0
+              const totalVoters = sharedState?.stationCounts?.[team.id] || 0
               return (
                 <div 
                   key={team.id} 
@@ -456,7 +456,7 @@ const App = () => {
         <motion.div key="leaderboard" className="fade-in" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <Header 
             title="Leaderboard" 
-            subtitle={`${sharedState.voterNames.length} JUDGES VOTED`} 
+            subtitle={`${sharedState?.voterNames?.length || 0} JUDGES VOTED`} 
             showBadge 
             syncStatus={syncStatus}
             left={<Trophy className="text-orange" />}
@@ -517,8 +517,8 @@ const App = () => {
                       <span>{wVotes}🥇 {rVotes}🥈</span>
                     </div>
                     <div style={{ height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden', display: 'flex' }}>
-                       <div style={{ width: `${(wVotes / (sharedState.voterNames.length || 1)) * 100}%`, background: 'var(--primary)' }} />
-                       <div style={{ width: `${(rVotes / (sharedState.voterNames.length || 1)) * 100}%`, background: 'var(--info)' }} />
+                       <div style={{ width: `${(wVotes / (sharedState?.voterNames?.length || 1)) * 100}%`, background: 'var(--primary)' }} />
+                       <div style={{ width: `${(rVotes / (sharedState?.voterNames?.length || 1)) * 100}%`, background: 'var(--info)' }} />
                     </div>
                   </div>
                 )
@@ -552,17 +552,17 @@ const App = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '24px' }}>
                <div className="card" style={{ textAlign: 'center', marginBottom: 0 }}>
                   <Users size={16} className="text-primary" style={{ marginBottom: '4px' }} />
-                  <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{sharedState.voterNames.length}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{sharedState?.voterNames?.length || 0}</div>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>VOTERS</div>
                </div>
                <div className="card" style={{ textAlign: 'center', marginBottom: 0 }}>
                   <Flame size={16} className="text-primary" style={{ marginBottom: '4px' }} />
-                  <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{Object.keys(sharedState.stationCounts).length}/7</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{Object.keys(sharedState?.stationCounts || {}).length}/7</div>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>STATIONS</div>
                </div>
                <div className="card" style={{ textAlign: 'center', marginBottom: 0 }}>
                   <CheckCircle2 size={16} className="text-primary" style={{ marginBottom: '4px' }} />
-                  <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{Object.values(sharedState.allBD.winner).reduce((a, b) => a + b, 0)}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{Object.values(sharedState?.allBD?.winner || {}).reduce((a, b) => a + (Number(b) || 0), 0)}</div>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>BD VOTES</div>
                </div>
             </div>
@@ -618,9 +618,9 @@ const App = () => {
             </div>
 
             <div className="card" style={{ direction: 'ltr' }}>
-               <h3 style={{ marginBottom: '12px', fontSize: '16px' }}>Completed Judges ({sharedState.voterNames.length})</h3>
+               <h3 style={{ marginBottom: '12px', fontSize: '16px' }}>Completed Judges ({sharedState?.voterNames?.length || 0})</h3>
                <div style={{ maxHeight: '150px', overflowY: 'auto', fontSize: '12px', color: 'var(--text-muted)' }}>
-                  {sharedState.voterNames.map((n, i) => <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)' }}>{n}</div>)}
+                  {sharedState?.voterNames?.map((n, i) => <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)' }}>{n}</div>)}
                </div>
             </div>
 

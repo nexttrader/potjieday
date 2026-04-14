@@ -36,7 +36,7 @@ export const usePotjieState = () => {
       
       if (error) throw error
       if (data && data.data) {
-        setSharedState(data.data)
+        setSharedState({ ...INITIAL_STATE, ...data.data })
         setSyncStatus('live')
       }
     } catch (err) {
@@ -57,7 +57,7 @@ export const usePotjieState = () => {
         { event: 'UPDATE', schema: 'public', table: 'potjie_state', filter: 'id=eq.main' },
         (payload) => {
           if (payload.new && payload.new.data) {
-            setSharedState(payload.new.data)
+            setSharedState(current => ({ ...INITIAL_STATE, ...payload.new.data }))
             setSyncStatus('live')
           }
         }
