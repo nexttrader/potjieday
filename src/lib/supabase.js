@@ -13,7 +13,6 @@ export const TEAMS = [
 export const CRITERIA = [
   { id: 'taste', name: 'Taste', emoji: '👅', desc: 'How does it taste?' },
   { id: 'tenderness', name: 'Tenderness', emoji: '🥩', desc: 'Meat texture & softness' },
-  { id: 'presentation', name: 'Presentation', emoji: '🎨', desc: 'Visual appeal & plating' },
   { id: 'aroma', name: 'Aroma', emoji: '🌿', desc: 'Smell & fragrance' },
   { id: 'gees', name: 'Gees (Spirit)', emoji: '🤙', desc: 'Team energy & vibe' }
 ]

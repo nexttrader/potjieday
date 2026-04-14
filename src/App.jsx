@@ -31,6 +31,14 @@ const App = () => {
     sbKey, setSbKey,
     supabase 
   } = usePotjieState()
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    window.onerror = (msg, url, lineNo, columnNo, err) => {
+      setError(`[${lineNo}:${columnNo}] ${msg}`)
+      return false
+    }
+  }, [])
 
   // Local state
   const [screen, setScreen] = useState(() => {
@@ -211,6 +219,16 @@ const App = () => {
 
   const stationsVoted = Object.keys(votes).length
   const progressPercent = (stationsVoted / TEAMS.length) * 100
+
+  if (error) {
+    return (
+      <div style={{ padding: '24px', color: 'red', fontSize: '12px', background: 'white', minHeight: '100vh' }}>
+        <h1>App Error</h1>
+        <pre>{error}</pre>
+        <button className="btn btn-primary" onClick={() => { localStorage.clear(); window.location.reload(); }}>Reset & Force Refresh</button>
+      </div>
+    )
+  }
 
   return (
     <AnimatePresence mode="wait">
@@ -581,22 +599,28 @@ const App = () => {
             })()}
 
             <div className="card" style={{ marginTop: '24px', marginBottom: '40px' }}>
-              <h3 style={{ marginBottom: '16px', fontSize: '18px' }}>👗 Best Dressed Results</h3>
+              <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--primary-dark)' }}>👗 Best Dressed Results</h3>
               {TEAMS.map(t => {
-                const wVotes = sharedState.allBD.winner[t.id] || 0
-                const rVotes = sharedState.allBD.runnerup[t.id] || 0
-                const totalBD = wVotes + rVotes
-                if (totalBD === 0) return null
+                const wVotes = sharedState?.allBD?.winner?.[t.id] || 0
+                const rVotes = sharedState?.allBD?.runnerup?.[t.id] || 0
+                
+                // Show ONLY winner to normal users, show both to admin
+                const isWinner = wVotes > 0 && wVotes === Math.max(...Object.values(sharedState?.allBD?.winner || { 'none': 0 }))
+                
+                if (wVotes === 0 && (screen !== 'admin' || rVotes === 0)) return null
+                if (screen !== 'admin' && !isWinner) return null
+                
                 return (
                   <div key={t.id} style={{ marginBottom: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
-                      <span>{t.emoji} {t.name}</span>
-                      <span>{wVotes}🥇 {rVotes}🥈</span>
+                      <span style={{ fontWeight: isWinner ? '900' : 'normal' }}>{t.emoji} {t.name}</span>
+                      <span>{wVotes}🥇 {screen === 'admin' ? `${rVotes}🥈` : ''}</span>
                     </div>
                     <div style={{ height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden', display: 'flex' }}>
                        <div style={{ width: `${(wVotes / (sharedState?.voterNames?.length || 1)) * 100}%`, background: 'var(--primary)' }} />
-                       <div style={{ width: `${(rVotes / (sharedState?.voterNames?.length || 1)) * 100}%`, background: 'var(--info)' }} />
+                       {screen === 'admin' && <div style={{ width: `${(rVotes / (sharedState?.voterNames?.length || 1)) * 100}%`, background: 'var(--accent)' }} />}
                     </div>
+                    {isWinner && <div style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 'bold', marginTop: '4px' }}>CURRENT LEADER</div>}
                   </div>
                 )
               })}
