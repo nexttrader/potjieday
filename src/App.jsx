@@ -72,6 +72,8 @@ const App = () => {
   const [potTapCount, setPotTapCount] = useState(0)
   const [showAdminLogin, setShowAdminLogin] = useState(false)
 
+  const [customTime, setCustomTime] = useState('30')
+
   // Persist local state
   useEffect(() => {
     localStorage.setItem('pq_screen', screen)
@@ -456,6 +458,22 @@ const App = () => {
                 <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--primary)' }}>{getTeamAvg(team.id)}</div>
               </div>
             ))}
+
+            <div className="card" style={{ marginTop: '24px', marginBottom: '40px', border: '2px solid var(--accent)', background: 'rgba(255, 126, 0, 0.05)' }}>
+              <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--primary-dark)', textAlign: 'center' }}>👗 BEST DRESSED WINNER</h3>
+              {(() => {
+                const maxVotes = Math.max(...Object.values(sharedState?.allBD || { 'none': 0 }))
+                if (maxVotes === 0) return <div style={{ textAlign: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>Calculating results...</div>
+                
+                return TEAMS.filter(t => (sharedState?.allBD?.[t.id] || 0) === maxVotes).map(t => (
+                  <div key={t.id} style={{ textAlign: 'center', padding: '20px' }}>
+                    <div style={{ fontSize: '60px', marginBottom: '12px' }}>{t.emoji}</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary-dark)' }}>{t.name}</div>
+                    <div style={{ fontSize: '14px', color: 'var(--accent)', fontWeight: 'bold', marginTop: '8px' }}>{maxVotes} TOTAL VOTES</div>
+                  </div>
+                ))
+              })()}
+            </div>
           </div>
         </motion.div>
       )}
@@ -488,13 +506,42 @@ const App = () => {
             <div className="card">
               <h3 style={{ fontSize: '16px', marginBottom: '12px' }}>Event Control</h3>
               <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                <button className="btn btn-primary" onClick={() => updateSharedState({...sharedState, votingOpen: true})}>Open Voting</button>
-                <button className="btn btn-secondary" onClick={() => updateSharedState({...sharedState, votingOpen: false})}>Close Voting</button>
+                <button className={`btn ${sharedState?.votingOpen ? 'btn-secondary' : 'btn-primary'}`} style={{ flex: 1 }} onClick={() => updateSharedState({...sharedState, votingOpen: true})}>Open Voting</button>
+                <button className={`btn ${!sharedState?.votingOpen ? 'btn-secondary' : 'btn-primary'}`} style={{ flex: 1, borderColor: 'var(--error)', background: !sharedState?.votingOpen ? 'transparent' : '' }} onClick={() => updateSharedState({...sharedState, votingOpen: false})}>Close Voting</button>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn btn-primary" onClick={() => updateSharedState({...sharedState, leaderboardOn: true})}>Show Leaderboard</button>
-                <button className="btn btn-secondary" onClick={() => updateSharedState({...sharedState, leaderboardOn: false})}>Hide Leaderboard</button>
+                <button className={`btn ${sharedState?.leaderboardOn ? 'btn-secondary' : 'btn-primary'}`} style={{ flex: 1 }} onClick={() => updateSharedState({...sharedState, leaderboardOn: true})}>Show Leaderboard</button>
+                <button className={`btn ${!sharedState?.leaderboardOn ? 'btn-secondary' : 'btn-primary'}`} style={{ flex: 1 }} onClick={() => updateSharedState({...sharedState, leaderboardOn: false})}>Hide Leaderboard</button>
               </div>
+            </div>
+
+            <div className="card">
+               <h3 style={{ marginBottom: '12px', fontSize: '16px' }}>Voting Countdown</h3>
+               {sharedState?.timerEnd ? (
+                 <div style={{ textAlign: 'center' }}>
+                    <TimerDisplay timerEnd={sharedState.timerEnd} />
+                    <button className="btn btn-secondary" style={{ marginTop: '12px' }} onClick={() => updateSharedState({...sharedState, timerEnd: null})}>Cancel Timer</button>
+                 </div>
+               ) : (
+                 <>
+                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '12px' }}>
+                      {[15, 30, 45, 60].map(m => (
+                        <button key={m} className="btn btn-secondary" style={{ padding: '8px', fontSize: '12px' }} onClick={() => updateSharedState({...sharedState, timerEnd: Date.now() + m * 60 * 1000, votingOpen: true})}>{m}m</button>
+                      ))}
+                   </div>
+                   <div style={{ display: 'flex', gap: '8px' }}>
+                     <input 
+                       type="number" 
+                       value={customTime}
+                       onChange={(e) => setCustomTime(e.target.value)}
+                       className="glass"
+                       style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border)' }}
+                       placeholder="Minutes..."
+                     />
+                     <button className="btn btn-primary" style={{ width: 'auto' }} onClick={() => updateSharedState({...sharedState, timerEnd: Date.now() + parseInt(customTime) * 60 * 1000, votingOpen: true})}>Set Custom</button>
+                   </div>
+                 </>
+               )}
             </div>
 
             <div className="card" style={{ direction: 'ltr' }}>
