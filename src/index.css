@@ -1,14 +1,18 @@
 :root {
   /* Colors */
-  --primary: #FF4E00;
-  --bg: #1C1C1E;
-  --surface: #242426;
-  --border: #3A3A3C;
-  --text-primary: #F5F5F7;
-  --text-muted: #98989D;
+  --primary: #009AC7; /* Capitec Sky Blue */
+  --primary-dark: #003764; /* Capitec Dark Blue */
+  --accent: #E11B22; /* Capitec Red */
+  --bg: #F3F6F8; /* Light gray-blue background */
+  --card: #FFFFFF;
+  --surface: #FFFFFF;
+  --border: #E5E7EB;
+  --text-primary: #003764;
+  --text-muted: #6B7280;
   --success: #30D158;
-  --error: #FF453A;
-  --info: #0A84FF;
+  --error: #E11B22;
+  --info: #009AC7;
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
   
   /* Typography */
   --font-serif: "Georgia", serif;
@@ -23,6 +27,7 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  font-family: 'Georgia', serif;
 }
 
 html, body {
@@ -34,6 +39,8 @@ html, body {
   overscroll-behavior-y: none;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  user-select: none;
 }
 
 body {

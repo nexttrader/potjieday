@@ -41,6 +41,8 @@ const App = () => {
   const [draftScores, setDraftScores] = useState({})
   const [adminPin, setAdminPin] = useState('')
   const [shakeAdmin, setShakeAdmin] = useState(false)
+  const [potTapCount, setPotTapCount] = useState(0)
+  const [showAdminLogin, setShowAdminLogin] = useState(false)
 
   // Persist local state
   useEffect(() => {
@@ -59,10 +61,36 @@ const App = () => {
     }
   }, [sharedState])
 
-  const navigate = (s) => setScreen(s)
+  const navigate = (s) => {
+    setScreen(s)
+    setPotTapCount(0)
+  }
 
   const handleBeginJudging = () => {
-    if (name.trim()) navigate('list')
+    if (!name.trim()) return
+    
+    let uniqueName = name.trim()
+    const existing = sharedState?.voterNames || []
+    let count = 0
+    
+    // Auto-numbering for duplicate names
+    while (existing.includes(count === 0 ? uniqueName : `${uniqueName} ${count}`)) {
+      count++
+    }
+    
+    const finalName = count === 0 ? uniqueName : `${uniqueName} ${count}`
+    setName(finalName)
+    navigate('list')
+  }
+
+  const handlePotTap = () => {
+    const newCount = potTapCount + 1
+    if (newCount >= 5) {
+      setShowAdminLogin(true)
+      setPotTapCount(0)
+    } else {
+      setPotTapCount(newCount)
+    }
   }
 
   const handleAdminEnter = () => {
@@ -128,9 +156,27 @@ const App = () => {
   }
 
   const resetApp = async () => {
-    if (confirm('ARE YOU SURE? This will wipe ALL current data from Supabase and ALL judges!')) {
+    if (confirm('FULL SYSTEM RESET? This wipes ALL data including Supabase settings.')) {
       await updateSharedState(INITIAL_STATE)
       localStorage.clear()
+      window.location.reload()
+    }
+  }
+
+  const softReset = async () => {
+    if (confirm('ALLOW REVOTE? This wipes all scores and judge names, but keeps app settings.')) {
+      await updateSharedState({
+        ...sharedState,
+        allVotes: {},
+        allBD: { winner: {}, runnerup: {} },
+        voterNames: [],
+        stationCounts: {},
+        updatedAt: Date.now()
+      })
+      localStorage.removeItem('pq_votes')
+      localStorage.removeItem('pq_bd')
+      localStorage.removeItem('pq_screen')
+      alert('Scores cleared. You can now refresh and revote.')
       window.location.reload()
     }
   }
@@ -157,9 +203,12 @@ const App = () => {
       {screen === 'home' && (
         <motion.div key="home" className="fade-in" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ padding: '24px' }}>
           <div style={{ textAlign: 'center', marginTop: '40px', marginBottom: '60px' }}>
-            <div style={{ fontSize: '80px', marginBottom: '10px' }}>🫕</div>
-            <div style={{ fontSize: '12px', color: 'var(--primary)', letterSpacing: '2px', fontWeight: 'bold' }}>THE GREAT</div>
-            <h1 style={{ fontSize: '38px', fontWeight: '900', marginTop: '-5px' }}>Potjie Cook-Off</h1>
+            <div 
+              style={{ fontSize: '80px', marginBottom: '10px', cursor: 'pointer' }} 
+              onClick={handlePotTap}
+            >🫕</div>
+            <div style={{ fontSize: '11px', color: 'var(--accent)', letterSpacing: '2px', fontWeight: 'bold' }}>THE APP TEAM'S</div>
+            <h1 style={{ fontSize: '32px', fontWeight: '900', marginTop: '-2px', color: 'var(--primary-dark)' }}>Potjie Cook-Off</h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '5px' }}>7 stations · 5 criteria · 1 champion</p>
           </div>
 
@@ -175,42 +224,56 @@ const App = () => {
             {sharedState.leaderboardOn ? 'View Live Leaderboard' : 'Leaderboard not yet released'}
           </button>
 
-          <div className="card">
-            <h3 style={{ marginBottom: '16px', fontSize: '18px' }}>Join the Jury</h3>
+          <div className="card shadow-sm">
+            <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--primary-dark)' }}>Join the Jury</h3>
             <input 
               type="text" 
-              placeholder="Enter your name..." 
+              placeholder="Your name..." 
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="glass"
-              style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: 'white', marginBottom: '16px' }}
+              style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid var(--border)', background: '#F9FAFB', color: 'var(--primary-dark)', marginBottom: '16px' }}
             />
             <button className="btn btn-primary" onClick={handleBeginJudging}>
               Begin Judging
             </button>
           </div>
 
-          <div style={{ marginTop: 'auto', padding: '40px 0', borderTop: '1px solid var(--border)' }}>
-             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
-                <Lock size={14} className="text-muted" />
-                <span className="text-muted" style={{ fontSize: '12px', fontWeight: 'bold' }}>ADMIN ACCESS</span>
-             </div>
-             <div style={{ display: 'flex', gap: '8px' }}>
-                <input 
-                  type="password" 
-                  placeholder="PIN" 
-                  value={adminPin}
-                  onChange={(e) => setAdminPin(e.target.value)}
-                  className={`glass ${shakeAdmin ? 'shake' : ''}`}
-                  style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: 'white' }}
-                />
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ width: 'auto', padding: '10px 20px' }}
-                  onClick={handleAdminEnter}
-                >Enter</button>
-             </div>
-          </div>
+          <AnimatePresence>
+            {showAdminLogin && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }} 
+                animate={{ height: 'auto', opacity: 1 }} 
+                exit={{ height: 0, opacity: 0 }}
+                style={{ overflow: 'hidden', marginTop: '40px' }}
+              >
+                <div className="card" style={{ background: 'rgba(0, 55, 100, 0.05)', borderColor: 'var(--primary-dark)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <Lock size={14} className="text-muted" />
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--primary-dark)' }}>ADMIN CONSOLE</span>
+                    </div>
+                    <button onClick={() => setShowAdminLogin(false)}><X size={16} /></button>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input 
+                      type="password" 
+                      placeholder="PIN" 
+                      value={adminPin}
+                      onChange={(e) => setAdminPin(e.target.value)}
+                      className={`glass ${shakeAdmin ? 'shake' : ''}`}
+                      style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'white', color: 'black' }}
+                    />
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ width: 'auto', padding: '12px 24px' }}
+                      onClick={handleAdminEnter}
+                    >Enter</button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
 
@@ -624,11 +687,19 @@ const App = () => {
                </div>
             </div>
 
-            <div className="card" style={{ borderColor: 'var(--error)', background: 'rgba(255, 69, 58, 0.05)', marginTop: '40px' }}>
+            <div className="card" style={{ borderColor: 'var(--error)', background: 'rgba(225, 27, 34, 0.05)', marginTop: '40px' }}>
                <h3 style={{ color: 'var(--error)', marginBottom: '12px' }}>DANGER ZONE</h3>
-               <button className="btn btn-secondary" style={{ borderColor: 'var(--error)', color: 'var(--error)' }} onClick={resetApp}>
-                 Reset Entire App
-               </button>
+               <div style={{ display: 'flex', gap: '12px' }}>
+                  <button className="btn btn-secondary" style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }} onClick={softReset}>
+                    Soft Reset (Revotes)
+                  </button>
+                  <button className="btn btn-secondary" style={{ borderColor: 'var(--error)', color: 'var(--error)' }} onClick={resetApp}>
+                    Full wipe
+                  </button>
+               </div>
+               <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '12px' }}>
+                 Soft reset clears votes but keeps timer & leaderboard settings.
+               </p>
             </div>
             <div style={{ height: '60px' }} />
           </div>

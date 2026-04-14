@@ -84,9 +84,9 @@ export const TimerDisplay = ({ timerEnd, onEnd }) => {
   const isUrgent = timeLeft < 5 * 60 * 1000
 
   return (
-    <div className="card fade-in" style={{ borderColor: isUrgent ? 'var(--error)' : 'var(--primary)', textAlign: 'center' }}>
+    <div className="card fade-in" style={{ borderColor: isUrgent ? 'var(--error)' : 'var(--primary)', textAlign: 'center', background: isUrgent ? 'rgba(225, 27, 34, 0.05)' : 'rgba(0, 154, 199, 0.05)' }}>
       <div style={{ fontSize: '12px', color: isUrgent ? 'var(--error)' : 'var(--primary)', fontWeight: 'bold' }}>VOTING CLOSES IN</div>
-      <div style={{ fontSize: '32px', fontWeight: 'bold', color: isUrgent ? 'var(--error)' : 'white' }}>
+      <div style={{ fontSize: '32px', fontWeight: 'bold', color: isUrgent ? 'var(--error)' : 'var(--text-primary)' }}>
         {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </div>
     </div>
@@ -112,7 +112,8 @@ export const CriterionSlider = ({ criterion, value, onChange }) => (
         alignItems: 'center', 
         justifyContent: 'center',
         fontWeight: 'bold',
-        fontSize: '18px'
+        fontSize: '18px',
+        color: 'white'
       }}>
         {value}
       </div>
