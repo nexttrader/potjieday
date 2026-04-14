@@ -3,13 +3,13 @@
   --primary: #009AC7; /* Capitec Sky Blue */
   --primary-dark: #003764; /* Capitec Dark Blue */
   --accent: #E11B22; /* Capitec Red */
-  --bg: #F3F6F8; /* Light gray-blue background */
-  --card: #FFFFFF;
+  --bg: #FFFFFF;
+  --card: #F9FAFB;
   --surface: #FFFFFF;
-  --border: #E5E7EB;
+  --border: #D1D5DB;
   --text-primary: #003764;
-  --text-muted: #6B7280;
-  --success: #30D158;
+  --text-muted: #4B5563; /* Darker for better contrast */
+  --success: #059669; /* Slightly darker green */
   --error: #E11B22;
   --info: #009AC7;
   --safe-area-inset-bottom: env(safe-area-inset-bottom);
@@ -75,55 +75,58 @@ input, select {
 }
 
 .glass {
-  background: rgba(36, 36, 38, 0.8);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
 }
 
 .card {
-  background: var(--surface);
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 16px;
+  border-radius: var(--radius-lg);
+  padding: 20px;
   margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 20px;
+  padding: 16px 20px;
   border-radius: var(--radius-md);
-  font-weight: 600;
+  font-weight: 800;
   font-size: 16px;
   text-decoration: none;
-  color: white;
   width: 100%;
 }
 
 .btn-primary {
   background: var(--primary);
-  box-shadow: 0 4px 15px rgba(255, 78, 0, 0.3);
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(0, 154, 199, 0.2);
 }
 
 .btn-primary:active {
   transform: scale(0.98);
-  box-shadow: 0 2px 8px rgba(255, 78, 0, 0.2);
 }
 
 .btn-secondary {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: white;
+  border: 2px solid var(--primary);
+  color: var(--primary-dark) !important;
 }
 
 .btn-disabled {
-  background: var(--border);
-  color: var(--text-muted);
+  background: #E5E7EB;
+  color: #9CA3AF !important;
   cursor: not-allowed;
   box-shadow: none;
+  border-color: #E5E7EB;
 }
 
-.text-orange { color: var(--primary); }
+.text-orange { color: var(--accent); } /* Renamed internally but used for Red now */
 .text-muted { color: var(--text-muted); }
 .text-success { color: var(--success); }
 .text-error { color: var(--error); }
@@ -152,18 +155,21 @@ input, select {
   top: 0;
   z-index: 100;
   padding: 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--primary);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
 }
 
 .status-badge {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--primary-dark);
+  color: white;
 }
 
 .dot {
@@ -172,8 +178,8 @@ input, select {
   border-radius: 50%;
 }
 
-.dot-live { background: var(--success); box-shadow: 0 0 5px var(--success); }
-.dot-connecting { background: var(--info); }
+.dot-live { background: #30D158; box-shadow: 0 0 5px #30D158; }
+.dot-connecting { background: var(--primary); }
 .dot-offline { background: var(--error); }
 .dot-local { background: var(--text-muted); }
 
@@ -182,7 +188,8 @@ input[type=range] {
   -webkit-appearance: none;
   width: 100%;
   background: transparent;
-  touch-action: pan-y;
+  padding: 10px 0;
+  cursor: pointer;
 }
 
 input[type=range]:focus {
@@ -191,19 +198,27 @@ input[type=range]:focus {
 
 input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
-  height: 8px;
-  cursor: pointer;
-  background: var(--border);
-  border-radius: 4px;
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 3px;
 }
 
 input[type=range]::-webkit-slider-thumb {
-  height: 24px;
-  width: 24px;
+  height: 28px;
+  width: 28px;
   border-radius: 50%;
   background: var(--primary);
-  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 2px 6px rgba(0, 154, 199, 0.3);
   -webkit-appearance: none;
-  margin-top: -8px;
-  box-shadow: 0 0 10px rgba(255, 78, 0, 0.5);
+  margin-top: -11px;
+}
+
+.app-team-title {
+  font-size: 16px; 
+  color: var(--accent); 
+  letter-spacing: 2px; 
+  font-weight: 900;
+  display: block;
+  margin-bottom: 2px;
 }

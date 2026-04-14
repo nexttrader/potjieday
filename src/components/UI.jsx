@@ -36,7 +36,7 @@ export const Header = ({ title, subtitle, left, right, showBadge, syncStatus }) 
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
         {left}
         <div>
-          <div style={{ fontSize: '10px', color: 'var(--primary)', letterSpacing: '1px', textTransform: 'uppercase' }}>{subtitle}</div>
+          <div style={{ fontSize: '10px', color: 'var(--primary-dark)', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 900 }}>{subtitle}</div>
           <h2 style={{ fontSize: '20px', fontWeight: 'bold' }}>{title}</h2>
         </div>
       </div>

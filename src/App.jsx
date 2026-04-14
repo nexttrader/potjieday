@@ -207,7 +207,7 @@ const App = () => {
               style={{ fontSize: '80px', marginBottom: '10px', cursor: 'pointer' }} 
               onClick={handlePotTap}
             >🫕</div>
-            <div style={{ fontSize: '11px', color: 'var(--accent)', letterSpacing: '2px', fontWeight: 'bold' }}>THE APP TEAM'S</div>
+            <div className="app-team-title">THE APP TEAM'S</div>
             <h1 style={{ fontSize: '32px', fontWeight: '900', marginTop: '-2px', color: 'var(--primary-dark)' }}>Potjie Cook-Off</h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '5px' }}>7 stations · 5 criteria · 1 champion</p>
           </div>
@@ -545,9 +545,9 @@ const App = () => {
                           {medal || index + 1}
                         </span>
                         <span style={{ fontSize: '24px' }}>{team.emoji}</span>
-                        <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{team.name}</div>
+                        <div style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--primary-dark)' }}>{team.name}</div>
                       </div>
-                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: index === 0 ? 'var(--primary)' : 'white' }}>{avg}</div>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: index === 0 ? 'var(--accent)' : 'var(--primary-dark)' }}>{avg}</div>
                     </div>
                     
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
