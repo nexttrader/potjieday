@@ -158,6 +158,7 @@ input, select {
   border-bottom: 2px solid var(--primary);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .status-badge {
