@@ -72,10 +72,15 @@ export const usePotjieState = () => {
         fetchState()
       }
     }
+    
+    // Auto-refresh every 30 seconds for live updates
+    const refreshInterval = setInterval(fetchState, 30000)
+    
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      supabase.removeChannel(channel)
+      clearInterval(refreshInterval)
+      if (supabase) supabase.removeChannel(channel)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [sbUrl, sbKey])

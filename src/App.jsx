@@ -151,8 +151,11 @@ const App = () => {
     navigate('list')
   }
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const submitBestDressed = async () => {
-    if (!bd.winner) return
+    if (!bd.winner || isSubmitting) return
+    setIsSubmitting(true)
     
     // Local persistence
     const newBd = { winner: bd.winner }
@@ -161,12 +164,17 @@ const App = () => {
 
     // Atomic backend update via RPC
     if (supabase) {
-      await supabase.rpc('submit_potjie_vote', {
-        p_judge_name: name,
-        p_team_id: bd.winner,
-        p_scores: {},
-        p_is_best_dressed: true
-      })
+      try {
+        await supabase.rpc('submit_potjie_vote', {
+          p_judge_name: name,
+          p_team_id: bd.winner,
+          p_scores: {},
+          p_is_best_dressed: true
+        })
+        await fetchState() // Force refresh after vote
+      } catch (e) {
+        console.error("Vote submission error:", e)
+      }
     }
     
     confetti({
@@ -175,6 +183,7 @@ const App = () => {
       origin: { y: 0.6 },
       colors: ['#003764', '#E11B22', '#009AC7']
     })
+    setIsSubmitting(false)
     navigate('done')
   }
 
@@ -219,6 +228,7 @@ const App = () => {
   }
 
   const stationsVoted = Object.keys(votes).length
+  const isUserDone = stationsVoted === TEAMS.length && (bd.winner || localStorage.getItem('pq_bd'))
   const progressPercent = (stationsVoted / TEAMS.length) * 100
 
   if (error) {
@@ -267,8 +277,8 @@ const App = () => {
               className="glass"
               style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid var(--border)', background: '#F9FAFB', color: 'var(--primary-dark)', marginBottom: '16px' }}
             />
-            <button className="btn btn-primary" onClick={handleBeginJudging}>
-              Begin Judging
+            <button className={`btn ${isUserDone ? 'btn-secondary btn-disabled' : 'btn-primary'}`} onClick={isUserDone ? null : handleBeginJudging}>
+              {isUserDone ? 'Judging Complete ✅' : 'Begin Judging'}
             </button>
           </div>
 
@@ -734,14 +744,51 @@ const App = () => {
         <motion.div key="setup" className="fade-in" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <Header title="Setup" subtitle="SUPABASE CONNECTION" right={<button onClick={() => navigate('admin')}><X size={24} /></button>} />
           <div style={{ padding: '16px' }}>
+            <div className="card shadow-sm">
+              <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--primary-dark)' }}>Supabase Configuration</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>These credentials allow your app to sync scores in real-time.</p>
+              
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--primary-dark)', display: 'block', marginBottom: '4px' }}>PROJECT URL</label>
+                <input 
+                  type="text" 
+                  value={sbUrl}
+                  onChange={(e) => setSbUrl(e.target.value)}
+                  placeholder="https://your-project.supabase.co"
+                  className="glass"
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'white', color: 'black' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--primary-dark)', display: 'block', marginBottom: '4px' }}>ANON KEY</label>
+                <textarea 
+                  rows={3}
+                  value={sbKey}
+                  onChange={(e) => setSbKey(e.target.value)}
+                  placeholder="Supabase Anon Key"
+                  className="glass"
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'white', color: 'black', fontSize: '12px' }}
+                />
+              </div>
+
+              <button className="btn btn-primary" onClick={() => navigate('admin')}>
+                Save & Continue
+              </button>
+            </div>
+
             <div className="card">
-              <h3 style={{ marginBottom: '12px' }}>Step 1: SQL</h3>
-              <pre style={{ fontSize: '10px', background: 'black', padding: '12px', borderRadius: '8px', overflowX: 'auto', color: '#0f0' }}>
+               <h3 style={{ marginBottom: '12px', fontSize: '16px' }}>Database Schema (Run in Supabase SQL)</h3>
+               <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>Run this code in your Supabase SQL Editor to enable real-time scoring and data integrity.</p>
+               <pre style={{ fontSize: '10px', background: 'black', padding: '12px', borderRadius: '8px', overflowX: 'auto', color: '#0f0' }}>
 {`create table potjie_state (
   id text primary key,
   data jsonb default '{}'::jsonb,
   updated_at timestamptz default now()
 );
+
+alter publication supabase_realtime add table potjie_state;
+create policy "Public Access" on potjie_state for all using (true);
 
 -- Initialize
 insert into potjie_state (id, data) 
