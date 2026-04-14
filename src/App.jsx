@@ -54,7 +54,7 @@ const App = () => {
 
   // Real-time synchronization effects
   useEffect(() => {
-    if (sharedState.timerEnd && Date.now() > sharedState.timerEnd && sharedState.votingOpen) {
+    if (sharedState?.timerEnd && Date.now() > sharedState.timerEnd && sharedState.votingOpen) {
       if (syncStatus === 'live') {
         updateSharedState({ ...sharedState, votingOpen: false, timerEnd: null })
       }
@@ -212,16 +212,16 @@ const App = () => {
             <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '5px' }}>7 stations · 5 criteria · 1 champion</p>
           </div>
 
-          <TimerDisplay timerEnd={sharedState.timerEnd} />
+          <TimerDisplay timerEnd={sharedState?.timerEnd} />
 
           <button 
-            className={`btn ${sharedState.leaderboardOn ? 'btn-primary' : 'btn-secondary btn-disabled'}`}
+            className={`btn ${sharedState?.leaderboardOn ? 'btn-primary' : 'btn-secondary btn-disabled'}`}
             style={{ marginBottom: '40px' }}
-            disabled={!sharedState.leaderboardOn}
+            disabled={!sharedState?.leaderboardOn}
             onClick={() => navigate('leaderboard')}
           >
             <BarChart3 size={20} style={{ marginRight: '10px' }} />
-            {sharedState.leaderboardOn ? 'View Live Leaderboard' : 'Leaderboard not yet released'}
+            {sharedState?.leaderboardOn ? 'View Live Leaderboard' : 'Leaderboard not yet released'}
           </button>
 
           <div className="card shadow-sm">
@@ -299,8 +299,8 @@ const App = () => {
               <div style={{ width: `${progressPercent}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.5s ease' }} />
             </div>
 
-            {!sharedState.votingOpen && (
-              <div className="card" style={{ borderColor: 'var(--error)', background: 'rgba(255, 69, 58, 0.1)' }}>
+            {!sharedState?.votingOpen && (
+              <div className="card" style={{ borderColor: 'var(--error)', background: 'rgba(225, 27, 34, 0.05)' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <AlertCircle className="text-error" />
                   <div style={{ fontWeight: 'bold' }}>Voting has been closed by the admin</div>
@@ -308,7 +308,7 @@ const App = () => {
               </div>
             )}
 
-            <TimerDisplay timerEnd={sharedState.timerEnd} />
+            <TimerDisplay timerEnd={sharedState?.timerEnd} />
 
             {TEAMS.map(team => {
               const voted = !!votes[team.id]
@@ -348,22 +348,22 @@ const App = () => {
             })}
 
             <button 
-              className={`btn ${stationsVoted === TEAMS.length && (sharedState.votingOpen || screen !== 'list') ? 'btn-primary' : 'btn-secondary btn-disabled'}`}
+              className={`btn ${stationsVoted === TEAMS.length && (sharedState?.votingOpen || screen !== 'list') ? 'btn-primary' : 'btn-secondary btn-disabled'}`}
               style={{ marginTop: '20px' }}
-              disabled={stationsVoted !== TEAMS.length || !sharedState.votingOpen}
+              disabled={stationsVoted !== TEAMS.length || !sharedState?.votingOpen}
               onClick={() => navigate('dressed')}
             >
               Submit Votes & Pick Best Dressed &rarr;
             </button>
 
             <button 
-              className={`btn ${sharedState.leaderboardOn ? 'btn-primary' : 'btn-secondary btn-disabled'}`}
+              className={`btn ${sharedState?.leaderboardOn ? 'btn-primary' : 'btn-secondary btn-disabled'}`}
               style={{ marginTop: '12px', marginBottom: '40px' }}
-              disabled={!sharedState.leaderboardOn}
+              disabled={!sharedState?.leaderboardOn}
               onClick={() => navigate('leaderboard')}
             >
               <BarChart3 size={20} style={{ marginRight: '10px' }} />
-              {sharedState.leaderboardOn ? 'View Live Leaderboard' : 'Leaderboard Locked'}
+              {sharedState?.leaderboardOn ? 'View Live Leaderboard' : 'Leaderboard Locked'}
             </button>
           </div>
         </motion.div>
