@@ -33,10 +33,24 @@ const App = () => {
   } = usePotjieState()
 
   // Local state
-  const [screen, setScreen] = useState(() => localStorage.getItem('pq_screen') || 'home')
-  const [name, setName] = useState(() => localStorage.getItem('pq_name') || '')
-  const [votes, setVotes] = useState(() => JSON.parse(localStorage.getItem('pq_votes') || '{}'))
-  const [bd, setBd] = useState(() => JSON.parse(localStorage.getItem('pq_bd') || '{ "winner": null, "runnerup": null }'))
+  const [screen, setScreen] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pq_screen')
+      const valid = ['home', 'list', 'vote', 'dressed', 'done', 'leaderboard', 'admin', 'setup']
+      return valid.includes(saved) ? saved : 'home'
+    } catch {
+      return 'home'
+    }
+  })
+  const [name, setName] = useState(() => {
+    try { return localStorage.getItem('pq_name') || '' } catch { return '' }
+  })
+  const [votes, setVotes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('pq_votes') || '{}') } catch { return {} }
+  })
+  const [bd, setBd] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('pq_bd') || '{ "winner": null, "runnerup": null }') } catch { return { "winner": null, "runnerup": null } }
+  })
   const [activeTeamId, setActiveTeamId] = useState(null)
   const [draftScores, setDraftScores] = useState({})
   const [adminPin, setAdminPin] = useState('')

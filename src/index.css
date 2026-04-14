@@ -36,14 +36,14 @@ html, body {
   background-color: var(--bg);
   color: var(--text-primary);
   font-family: var(--font-serif);
-  overscroll-behavior-y: none;
-  min-height: 100vh;
+  min-height: 100%;
   -webkit-font-smoothing: antialiased;
+  position: relative;
   overflow-x: hidden;
-  user-select: none;
 }
 
 body {
+  width: 100%;
   display: flex;
   justify-content: center;
 }
@@ -52,6 +52,7 @@ body {
   width: 100%;
   max-width: var(--container-max-width);
   min-height: 100vh;
+  background: var(--bg);
   position: relative;
   display: flex;
   flex-direction: column;
